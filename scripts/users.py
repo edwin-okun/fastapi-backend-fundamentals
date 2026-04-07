@@ -17,6 +17,21 @@ async def retry_httpx(
     retries: int = 3,
     base_delay: float = 0.5,
 ) -> httpx.Response:
+    
+    """
+    Retries an HTTP request with exponential backoff and jitter.
+    
+    Args:
+        fn: A callable that returns an awaitable httpx.Response.
+        retries: The maximum number of retry attempts.
+        base_delay: The initial delay in seconds before the first retry.
+    
+    Returns:
+        The httpx.Response object if the request is successful.
+    
+    Raises:
+            httpx.HTTPStatusError: If the request fails with a non-retryable status code or all retries are exhausted.
+    """
     for attempt in range(1, retries + 2):
         logger.debug(f"{datetime.now()} : Attempt {attempt} for function {fn.__name__}")
 
@@ -40,6 +55,7 @@ async def retry_httpx(
 BASE_URL = "http://127.0.0.1:8000/api/v1"
 
 async def create_user(name: str):
+    """Creates a user by making a POST request to the API, with retry logic for transient errors."""
     async with httpx.AsyncClient(timeout=httpx.Timeout(10.0), base_url=BASE_URL) as client:
         response = await retry_httpx(
             lambda: client.post("/users/create", params={"name": name}),
